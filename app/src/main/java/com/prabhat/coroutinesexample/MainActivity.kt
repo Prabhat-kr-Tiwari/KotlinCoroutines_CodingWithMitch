@@ -12,12 +12,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding :ActivityMainBinding
     private val RESULT_1="Result #1"
     private val RESULT_2="Result #2"
     private val TAG="ALEXA"
+//    private val JOB_TIMEOUT=1900L;
+    private val JOB_TIMEOUT=2100L;
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -53,14 +56,31 @@ class MainActivity : AppCompatActivity() {
 
 
     private suspend fun fakeApiRequest(){
-        val result1=getResultFrom1Api()
-        setTextOnMainThread(result1)
 
-        Log.d(TAG, "fakeApiRequest:${result1} ")
-        val result2=getResultFrom2Api()
-        setTextOnMainThread(result2)
+        withContext(Dispatchers.IO){
 
-        Log.d(TAG, "fakeApiRequest:${result2} ")
+          /*  val job=launch {
+                val result1=getResultFrom1Api()
+                setTextOnMainThread("Got ${result1}")
+                Log.d(TAG, "fakeApiRequest: $result1")
+
+                val result2=getResultFrom2Api()
+                setTextOnMainThread("Got ${result2}")
+            }*/
+            val job= withTimeoutOrNull(JOB_TIMEOUT) {
+                val result1=getResultFrom1Api()
+                setTextOnMainThread("Got ${result1}")
+                Log.d(TAG, "fakeApiRequest: $result1")
+
+                val result2=getResultFrom2Api()
+                setTextOnMainThread("Got ${result2}")
+            }
+            if (job==null){
+                val cancelMessage="Cancel Job You job took longer time $JOB_TIMEOUT"
+                setTextOnMainThread(cancelMessage)
+            }
+        }
+
 
     }
     private suspend fun getResultFrom1Api():String{
