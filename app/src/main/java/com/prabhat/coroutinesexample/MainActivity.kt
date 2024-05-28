@@ -89,8 +89,8 @@ class MainActivity : AppCompatActivity() {
                     Log.d(TAG, "fakeApiRequest: launching job2 on ${Thread.currentThread().name}")
                     getResult2FromApi()
                 }
-                setTextOnMainThread("Got $result1")
-                setTextOnMainThread("Got $result2")
+                setTextOnMainThread("Got ${result1.await()}")
+                setTextOnMainThread("Got ${result2.await()}")
             }
             Log.d(TAG, "fakeApiRequest: total time elapsed ${executionTime}")
         }
