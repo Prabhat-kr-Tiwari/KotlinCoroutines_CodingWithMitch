@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.prabhat.coroutinesexample.databinding.ActivityMainBinding
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
@@ -47,50 +48,45 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    //using launch
-/*    private suspend fun fakeApiRequest() {
 
-        val startTime=System.currentTimeMillis()
-        val parentJob=CoroutineScope(IO).launch {
-            val job1 = launch {
-                val time1= measureTimeMillis {
-
-                    Log.d(TAG, "fakeApiRequest: launching job1 in thread ${Thread.currentThread().name}")
-                    val result1=getResult1FromApi()
-                    setTextOnMainThread("Got $result1")
-                }
-                Log.d(TAG, "fakeApiRequest: completed job1 in $time1 ms.")
-            }
-            val job2 = launch {
-                val time2= measureTimeMillis {
-
-                    Log.d(TAG, "fakeApiRequest: launching job2 in thread ${Thread.currentThread().name}")
-                    val result2=getResult2FromApi()
-                    setTextOnMainThread("Got $result2")
-                }
-                Log.d(TAG, "fakeApiRequest: completed job2 in $time2 ms.")
-            }
-
-        }
-        parentJob.invokeOnCompletion {
-            Log.d(TAG, "fakeApiRequest: total elapsed time ${System.currentTimeMillis()-startTime}")
-        }
-    }*/
 
     //using async await
+  /*  private suspend fun fakeApiRequest(){
+        CoroutineScope(IO).launch {
+            val executionTime= measureTimeMillis {
+                val result1=async{
+                    Log.d(TAG, "fakeApiRequest: launching job1 on ${Thread.currentThread().name}")
+                    getResult1FromApi()
+                }.await()
+                val result2=async{
+                    Log.d(TAG, "fakeApiRequest: launching job2 on ${Thread.currentThread().name}")
+                    getResult2FromApi(result1)
+                }.await()
+                setTextOnMainThread("Got $result1")
+                setTextOnMainThread("Got $result2")
+            }
+            Log.d(TAG, "fakeApiRequest: total time elapsed ${executionTime}")
+        }
+    }*/
+    //HANDLING EXCEPTION
+
     private suspend fun fakeApiRequest(){
         CoroutineScope(IO).launch {
             val executionTime= measureTimeMillis {
                 val result1=async{
                     Log.d(TAG, "fakeApiRequest: launching job1 on ${Thread.currentThread().name}")
                     getResult1FromApi()
-                }
+                }.await()
                 val result2=async{
                     Log.d(TAG, "fakeApiRequest: launching job2 on ${Thread.currentThread().name}")
-                    getResult2FromApi()
-                }
-                setTextOnMainThread("Got ${result1.await()}")
-                setTextOnMainThread("Got ${result2.await()}")
+                    try {
+                        getResult2FromApi("876")
+                    } catch (e: CancellationException) {
+                        e.message
+                    }
+                }.await()
+                setTextOnMainThread("Got $result1")
+                setTextOnMainThread("Got $result2")
             }
             Log.d(TAG, "fakeApiRequest: total time elapsed ${executionTime}")
         }
@@ -119,10 +115,14 @@ class MainActivity : AppCompatActivity() {
         return "Result #1"
     }
 
-    private suspend fun getResult2FromApi(): String {
+    private suspend fun getResult2FromApi(result1:String): String {
 
         delay(1700)
-        return "Result #2"
+        if (result1.equals("Result #1")){
+            return "Result #1"
+        }
+        throw CancellationException("Result 1 was incorrect")
+
     }
 
 
