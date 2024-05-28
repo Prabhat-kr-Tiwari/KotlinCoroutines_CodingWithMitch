@@ -22,10 +22,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val TAG = "ALEXA"
 
-    private val PROGRESS_MAX = 100
-    private val PROGRESS_START = 0
-    private val JOB_TIME = 4000
-    private lateinit var job: CompletableJob
+    var count=0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,92 +34,35 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+        main()
         binding.button.setOnClickListener {
-            setNewText("Clicked")
-            CoroutineScope(IO).launch {
 
-                fakeApiRequest()
+           binding.text.text=count++.toString()
+        }
+
+
+    }
+
+    private fun main() {
+        CoroutineScope(Main).launch {//parent job
+            Log.d(TAG, "main: ${Thread.currentThread().name}")
+            //it is delaying a isolated coroutine in that thread not the whole thread
+//            delay(3000)
+            //Thread sleep will sleep whole the thread
+//            Thread.sleep(5000)
+
+            for (i in 1..100_000){
+                launch {//children job
+
+                    doNetworkRequest()
+                }
             }
         }
-
-
     }
-
-
-
-    //using async await
-  /*  private suspend fun fakeApiRequest(){
-        CoroutineScope(IO).launch {
-            val executionTime= measureTimeMillis {
-                val result1=async{
-                    Log.d(TAG, "fakeApiRequest: launching job1 on ${Thread.currentThread().name}")
-                    getResult1FromApi()
-                }.await()
-                val result2=async{
-                    Log.d(TAG, "fakeApiRequest: launching job2 on ${Thread.currentThread().name}")
-                    getResult2FromApi(result1)
-                }.await()
-                setTextOnMainThread("Got $result1")
-                setTextOnMainThread("Got $result2")
-            }
-            Log.d(TAG, "fakeApiRequest: total time elapsed ${executionTime}")
-        }
-    }*/
-    //HANDLING EXCEPTION
-
-    private suspend fun fakeApiRequest(){
-        CoroutineScope(IO).launch {
-            val executionTime= measureTimeMillis {
-                val result1=async{
-                    Log.d(TAG, "fakeApiRequest: launching job1 on ${Thread.currentThread().name}")
-                    getResult1FromApi()
-                }.await()
-                val result2=async{
-                    Log.d(TAG, "fakeApiRequest: launching job2 on ${Thread.currentThread().name}")
-                    try {
-                        getResult2FromApi("876")
-                    } catch (e: CancellationException) {
-                        e.message
-                    }
-                }.await()
-                setTextOnMainThread("Got $result1")
-                setTextOnMainThread("Got $result2")
-            }
-            Log.d(TAG, "fakeApiRequest: total time elapsed ${executionTime}")
-        }
-    }
-    private fun setNewText(input: String) {
-        // Get current text safely
-        val currentText = binding.text?.text.toString()
-
-        // Append new text with a newline
-        val newText = "$currentText\n$input"
-
-        // Set the new text
-        binding.text.text = newText
-    }
-
-    private suspend fun setTextOnMainThread(input: String) {
-        withContext(Main) {
-            setNewText(input)
-        }
-
-    }
-
-    private suspend fun getResult1FromApi(): String {
-
-        delay(1000)
-        return "Result #1"
-    }
-
-    private suspend fun getResult2FromApi(result1:String): String {
-
-        delay(1700)
-        if (result1.equals("Result #1")){
-            return "Result #1"
-        }
-        throw CancellationException("Result 1 was incorrect")
-
+    private suspend fun doNetworkRequest(){
+        Log.d(TAG, "Starting Network Request: ")
+        delay(3000)
+        Log.d(TAG, "Finished Network Request: ")
     }
 
 
