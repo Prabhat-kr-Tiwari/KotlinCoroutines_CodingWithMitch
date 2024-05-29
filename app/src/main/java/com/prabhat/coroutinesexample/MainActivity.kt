@@ -15,7 +15,9 @@ import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import kotlin.random.Random
 import kotlin.system.measureTimeMillis
 
 class MainActivity : AppCompatActivity() {
@@ -43,21 +45,64 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    private fun main() {
-        CoroutineScope(Main).launch {//parent job
-            Log.d(TAG, "main: ${Thread.currentThread().name}")
-            //it is delaying a isolated coroutine in that thread not the whole thread
-//            delay(3000)
-            //Thread sleep will sleep whole the thread
-//            Thread.sleep(5000)
+   /* private fun main() {
+      CoroutineScope(Main).launch {
+          Log.d(TAG, "main: Starting job in ${Thread.currentThread().name}")
+          val result1=getResult()
+          Log.d(TAG, "result1: $result1")
+          val result2=getResult()
+          Log.d(TAG, "result1: $result2")
+          val result3=getResult()
+          Log.d(TAG, "result1: $result3")
+          val result4=getResult()
+          Log.d(TAG, "result1: $result4")
+          val result5=getResult()
+          Log.d(TAG, "result1: $result5")
+      }
+    }*/
+   private fun main() {
+       CoroutineScope(IO).launch {
+           Log.d(TAG, "main: Starting job in ${Thread.currentThread().name}")
+           val result1=getResult()
+           Log.d(TAG, "IO-> result1: $result1")
+           val result2=getResult()
+           Log.d(TAG, "IO-> result1: $result2")
+           val result3=getResult()
+           Log.d(TAG, "IO-> result1: $result3")
+           val result4=getResult()
+           Log.d(TAG, "IO-> result1: $result4")
+           val result5=getResult()
+           Log.d(TAG, "IO-> result1: $result5")
+       }
+       CoroutineScope(Main).launch {
+           Log.d(TAG, "main: Starting job in ${Thread.currentThread().name}")
+           val result1=getResult()
+           Log.d(TAG, "result1: $result1")
+           val result2=getResult()
+           Log.d(TAG, "result1: $result2")
+           val result3=getResult()
+           Log.d(TAG, "result1: $result3")
+           val result4=getResult()
+           Log.d(TAG, "result1: $result4")
+           val result5=getResult()
+           Log.d(TAG, "result1: $result5")
+       }
 
-            for (i in 1..100_000){
-                launch {//children job
+       CoroutineScope(Main).launch {
+           delay(1000)
+           runBlocking {
+               Log.d(TAG, "Blocking thread: ${Thread.currentThread().name}")
+               delay(4000)
 
-                    doNetworkRequest()
-                }
-            }
-        }
+               Log.d(TAG, "Done blocking thread: ${Thread.currentThread().name}")
+
+           }
+       }
+   }
+    private suspend fun getResult():Int{
+        delay(1000)
+        return Random.nextInt(0,100)
+
     }
     private suspend fun doNetworkRequest(){
         Log.d(TAG, "Starting Network Request: ")
