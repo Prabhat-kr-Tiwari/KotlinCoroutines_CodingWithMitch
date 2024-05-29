@@ -12,6 +12,8 @@ import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -24,7 +26,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val TAG = "ALEXA"
 
-    var count=0
+    lateinit var parentJob:Job
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,76 +41,86 @@ class MainActivity : AppCompatActivity() {
         main()
         binding.button.setOnClickListener {
 
-           binding.text.text=count++.toString()
+            parentJob.cancel()
+
         }
-
-
     }
 
-   /* private fun main() {
-      CoroutineScope(Main).launch {
-          Log.d(TAG, "main: Starting job in ${Thread.currentThread().name}")
-          val result1=getResult()
-          Log.d(TAG, "result1: $result1")
-          val result2=getResult()
-          Log.d(TAG, "result1: $result2")
-          val result3=getResult()
-          Log.d(TAG, "result1: $result3")
-          val result4=getResult()
-          Log.d(TAG, "result1: $result4")
-          val result5=getResult()
-          Log.d(TAG, "result1: $result5")
-      }
-    }*/
-   private fun main() {
-       CoroutineScope(IO).launch {
-           Log.d(TAG, "main: Starting job in ${Thread.currentThread().name}")
-           val result1=getResult()
-           Log.d(TAG, "IO-> result1: $result1")
-           val result2=getResult()
-           Log.d(TAG, "IO-> result1: $result2")
-           val result3=getResult()
-           Log.d(TAG, "IO-> result1: $result3")
-           val result4=getResult()
-           Log.d(TAG, "IO-> result1: $result4")
-           val result5=getResult()
-           Log.d(TAG, "IO-> result1: $result5")
-       }
-       CoroutineScope(Main).launch {
-           Log.d(TAG, "main: Starting job in ${Thread.currentThread().name}")
-           val result1=getResult()
-           Log.d(TAG, "result1: $result1")
-           val result2=getResult()
-           Log.d(TAG, "result1: $result2")
-           val result3=getResult()
-           Log.d(TAG, "result1: $result3")
-           val result4=getResult()
-           Log.d(TAG, "result1: $result4")
-           val result5=getResult()
-           Log.d(TAG, "result1: $result5")
-       }
+    suspend fun work(i:Int){
 
-       CoroutineScope(Main).launch {
-           delay(1000)
-           runBlocking {
-               Log.d(TAG, "Blocking thread: ${Thread.currentThread().name}")
-               delay(4000)
+        delay(3000)
+        Log.d(TAG, "work: $i done ${Thread.currentThread().name}")
+    }
+  /* private fun main() {
 
-               Log.d(TAG, "Done blocking thread: ${Thread.currentThread().name}")
-
+       val startTime=System.currentTimeMillis()
+       Log.d(TAG, "main: Starting parent job")
+       parentJob=CoroutineScope(Main).launch {
+           launch {
+               work(1)
+           }
+           launch {
+               work(2)
            }
        }
-   }
+       parentJob.invokeOnCompletion {throwable->
+           if (throwable!=null){
+               Log.d(TAG, "job was cancelled after ${System.currentTimeMillis()-startTime} ms.")
+           }else{
+               Log.d(TAG, "Done in ${System.currentTimeMillis()-startTime}  ms.")
+           }
+       }
+   }*/
+
+    /*private fun main() {
+
+        val startTime=System.currentTimeMillis()
+        Log.d(TAG, "main: Starting parent job")
+        parentJob=CoroutineScope(Main).launch {
+            GlobalScope.launch {
+                work(1)
+            }
+            GlobalScope.launch {
+                work(2)
+            }
+        }
+        parentJob.invokeOnCompletion {throwable->
+            if (throwable!=null){
+                Log.d(TAG, "job was cancelled after ${System.currentTimeMillis()-startTime} ms.")
+            }else{
+                Log.d(TAG, "Done in ${System.currentTimeMillis()-startTime}  ms.")
+            }
+        }
+    }*/
+    private fun main() {
+
+        val startTime=System.currentTimeMillis()
+        Log.d(TAG, "main: Starting parent job")
+        parentJob=CoroutineScope(Main).launch {
+            CoroutineScope(Main).launch {
+                work(1)
+            }
+            CoroutineScope(Main).launch {
+                work(2)
+            }
+        }
+        parentJob.invokeOnCompletion {throwable->
+            if (throwable!=null){
+                Log.d(TAG, "job was cancelled after ${System.currentTimeMillis()-startTime} ms.")
+            }else{
+                Log.d(TAG, "Done in ${System.currentTimeMillis()-startTime}  ms.")
+            }
+        }
+    }
+
+
+
     private suspend fun getResult():Int{
         delay(1000)
         return Random.nextInt(0,100)
 
     }
-    private suspend fun doNetworkRequest(){
-        Log.d(TAG, "Starting Network Request: ")
-        delay(3000)
-        Log.d(TAG, "Finished Network Request: ")
-    }
+
 
 
 }
